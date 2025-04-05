@@ -22,13 +22,9 @@ public class Button : MonoBehaviour
     private void CheckIfButtonIsPressed()
     {
         Collider2D hit = Physics2D.OverlapCircle(transform.position, pressRadius);
-        if (hit && (hit.CompareTag("Player") || hit.CompareTag("Stone")))
+        if (hit && hit.CompareTag("Stone"))
         {
             OpenDoor();
-        }
-        else
-        {
-            CloseDoor();
         }
     }
 

@@ -1,11 +1,10 @@
 using System.Collections;
+using TMPro;
 using UnityEngine;
 
 public class Player : MonoBehaviour
 {
     
-    [SerializeField] private int maxHealth;
-    [SerializeField] private int currentHealth;
     [SerializeField] private float moveSpeed;
     [SerializeField] private float jumpForce;
     [SerializeField] private Transform attackPoint;
@@ -13,6 +12,10 @@ public class Player : MonoBehaviour
     [SerializeField] private LayerMask enemyLayer;
     [Range(0, 3)]
     [SerializeField] private float recoverySeconds;
+
+    [Header("UI")] 
+    [SerializeField] private TextMeshProUGUI goldText;
+    [SerializeField] private GameObject gameOverPanel;
 
     private Rigidbody2D rig;
     private AudioPlayer audioPlayer;
@@ -22,21 +25,27 @@ public class Player : MonoBehaviour
     private bool canDoubleJump;
     private bool isDead;
     private float iFramesCountdown;
+    private Health playerHealth;
     
-    private static Player instance;
+    public static Player instance;
 
+    public TextMeshProUGUI GoldText => goldText;
+    public GameObject GameOverPanel => gameOverPanel;
+    
     private Player(){}
 
     private void Awake()
     {
-        DontDestroyOnLoad(this);
         if (instance == null)
         {
             instance = this;
+            DontDestroyOnLoad(this);
         }
-        else
+        else if (instance != this)
         {
-            Destroy(gameObject);
+            Destroy(instance.gameObject);
+            instance = this;
+            DontDestroyOnLoad(this);
         }
     }
 
@@ -45,8 +54,8 @@ public class Player : MonoBehaviour
     {
         rig = GetComponent<Rigidbody2D>();
         anim = GetComponentInChildren<Animator>();
-        currentHealth = maxHealth;
         audioPlayer = GetComponent<AudioPlayer>();
+        playerHealth = GetComponent<Health>();
     }
 
     private void Update()
@@ -155,15 +164,16 @@ public class Player : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-        if (iFramesCountdown > 0) return;
+        if (iFramesCountdown > 0 || isDead) return;
         
-        currentHealth -= damage;
-        if (currentHealth <= 0)
+        playerHealth.TakeDamage(damage);
+        
+        if (playerHealth.CurrentHealth <= 0)
         {
             anim.SetTrigger(PlayerAnimations.TriggerDiedAnim);
             isDead = true;
             moveSpeed = 0;
-            // TODO Show Game Over and continue UI
+            GameController.instance.ShowGameOverScreen();
         }
         else
         {

@@ -2,9 +2,7 @@ using UnityEngine;
 
 public class Goblin : MonoBehaviour
 {
-    private const string AnimHit = "hit";
-    private const string AnimDied = "died";
-
+    
     [Header("Stats")]
     [SerializeField] private int maxHealth;
     [SerializeField] private float moveSpeed;
@@ -19,6 +17,11 @@ public class Goblin : MonoBehaviour
     [SerializeField] private float attackRange;
     [SerializeField] private bool isFacingRight = true;
     
+    [Header("Combat")]
+    [SerializeField] private Transform attackPoint;
+    [SerializeField] private float attackRadius;
+    [SerializeField] private float attackInterval;
+    
     [Header("Debug")]
     [SerializeField] private int currentHealth;
     [SerializeField] private bool isPlayerSighted;
@@ -28,6 +31,7 @@ public class Goblin : MonoBehaviour
     private Animator anim;
     
     private float iFramesCountdown;
+    private float attackCountdown;
     private bool isDead;
 
     // Start is called before the first frame update
@@ -36,6 +40,7 @@ public class Goblin : MonoBehaviour
         rig = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         currentHealth = maxHealth;
+        attackCountdown = attackInterval;
     }
 
     void FixedUpdate()
@@ -78,7 +83,23 @@ public class Goblin : MonoBehaviour
 
     private void AttackPlayer()
     {
+        if (iFramesCountdown > 0) return;
+        if (attackCountdown > 0)
+        {
+            attackCountdown -= Time.deltaTime;
+            return;
+        }
+
+        attackCountdown = attackInterval;
+        
         anim.SetInteger(GoblinAnimations.AnimTransition, (int)GoblinAnimations.States.Attack);
+        
+        Collider2D hit = Physics2D.OverlapCircle(attackPoint.position, attackRadius);
+        if (hit && hit.gameObject.layer == LayerMask.NameToLayer("Player"))
+        {
+            hit.GetComponent<Player>().TakeDamage(damage);
+        }
+        
         // TODO Damage on player logic here, with a inv period? But the animation didn't even happen here...
     }
 
@@ -138,6 +159,8 @@ public class Goblin : MonoBehaviour
         Gizmos.DrawRay(rearSightPoint.position, rearRayDirection * rearSightRange);
 
         Gizmos.DrawWireSphere(transform.position, attackRange);
+        
+        Gizmos.DrawWireSphere(attackPoint.position, attackRadius);
     }
 
     private void OnTriggerEnter2D(Collider2D other)

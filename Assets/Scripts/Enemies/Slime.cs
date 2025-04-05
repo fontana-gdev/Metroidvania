@@ -30,14 +30,16 @@ public class Slime : MonoBehaviour
     {
         if (isDead) return;
         
-        rig.velocity = new Vector2(moveSpeed, rig.velocity.y);
-        transform.eulerAngles = new Vector2(0, moveSpeed > 0 ? 180 : 0);
-        CheckWallCollision();
-        
         if (iFramesCountdown > 0)
         {
             iFramesCountdown -= Time.deltaTime;
+            rig.velocity = Vector2.zero;
+            return;
         }
+        
+        rig.velocity = new Vector2(moveSpeed, rig.velocity.y);
+        transform.eulerAngles = new Vector2(0, moveSpeed > 0 ? 180 : 0);
+        CheckWallCollision();
     }
 
     private void CheckWallCollision()
@@ -60,6 +62,7 @@ public class Slime : MonoBehaviour
         {
             isDead = true;
             moveSpeed = 0;
+            rig.velocity = Vector2.zero;
             anim.SetTrigger(AnimDied);
             Destroy(gameObject, 1f);
         }
